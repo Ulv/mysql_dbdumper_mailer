@@ -27,6 +27,24 @@
  */
 class DbDumperMailer extends DbDumper
 {
+    protected $email = "vladimir.chmil@gmail.com";
+
+    /**
+     * @param string $email
+     */
+    public function setEmail($email)
+    {
+        $this->email = $email;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEmail()
+    {
+        return $this->email;
+    }
+
     protected function start()
     {
         return $this;
