@@ -1,0 +1,18 @@
+{
+    "name": "Ulv/mysql_dbdumper_mailer",
+    "type": "library",
+    "description": "DbDumper & DbDumperMailer classes. Dumps MySQL db, sends dump to email",
+    "authors": [
+        {
+            "name": "Vladimir Chmil",
+            "email": "vladimir.chmil@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.0.0"
+    },
+    "autoload": {
+        "classmap": ["DbDumper.php", "DbDumperMailer.php"]
+    },
+    "license": "MIT"
+}
