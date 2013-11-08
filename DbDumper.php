@@ -1,12 +1,13 @@
 <?php
 /**
  * DbDumper
- * делает дамп базы mysql в формате, читаемом phpmyadmin
+ * РґРµР»Р°РµС‚ РґР°РјРї Р±Р°Р·С‹ mysql РІ С„РѕСЂРјР°С‚Рµ. Р”Р°РјРї РјРѕР¶РЅРѕ
+ * РёРјРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ phpmyadmin'РѕРј
  *
  * PHP version 5
  *
  * @category Website
- * @package  Application
+ * @package  Supplemental
  * @author   Vladimir Chmil <vladimir.chmil@gmail.com>
  * @license  http://mit-license.org/ MIT license
  * @link     http://xxx
@@ -14,13 +15,13 @@
 
 /**
  * DbDumper
- * делает дамп базы mysql в формате, читаемом phpmyadmin
- * Отдает дамп сжатый в gz
+ *
+ * РћС‚РґР°РµС‚ РґР°РјРї СЃР¶Р°С‚С‹Р№ РІ gz
  *
  * PHP version 5
  *
  * @category Website
- * @package  Application
+ * @package  Supplemental
  * @author   Vladimir Chmil <vladimir.chmil@gmail.com>
  * @license  http://mit-license.org/ MIT license
  * @link     http://xxx
@@ -33,64 +34,73 @@ class DbDumper
      */
     protected static $db;
     /**
-     * @var array таблички из базы
+     * @var array СЌРєСЃРїРѕСЂС‚РёСЂСѓРµРјС‹Рµ С‚Р°Р±Р»РёС†С‹
      */
     protected $tables = array();
     /**
-     * @var array таблички, которых в базе быть не должно
+     * @var array С‚Р°Р±Р»РёС‡РєРё, РґР°РјРї РєРѕС‚РѕСЂС‹С… РЅРµ РґРµР»Р°РµРј
      */
-    protected $exclude_tables = array(
-        "s_visits_stat", "s_visits_log",
-        "s_robots_stat", "s_robots_log"
-    );
+    protected $exclude_tables = array();
     /**
-     * @var имя временного файла gz
+     * @var РёРјСЏ РІСЂРµРјРµРЅРЅРѕРіРѕ С„Р°Р№Р»Р° gz
      */
     protected $tmpf;
     /**
-     * @var double переменная mysql max_allowed_packet
+     * @var double РїРµСЂРµРјРµРЅРЅР°СЏ mysql max_allowed_packet.
+     * Р­С‚Рѕ РЅСѓР¶РЅРѕ РґР»СЏ СЂР°Р·Р±РёРІРєРё INSERT'РѕРІ
      */
     protected $max_packet;
     /**
-     * @var handler файла gz
+     * @var mixed handle С„Р°Р№Р»Р° gz
      */
     protected $ex_gz;
     /**
-     * @var string кодировка базы (SET NAMES 'names')
+     * @var string РєРѕРґРёСЂРѕРІРєР° Р±Р°Р·С‹ (SET NAMES 'xxx')
      */
     protected $names;
 
     /**
-     * коннект к базе
+     * РєРѕРЅРЅРµРєС‚ Рє Р±Р°Р·Рµ РІ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂРµ.
+     * Р’ РїР°СЂР°РјРµС‚СЂР°С… РґР°РЅРЅС‹Рµ Р°РІС‚РѕСЂРёР·Р°С†РёРё
      *
-     * @param        $user
-     * @param        $pass
-     * @param        $db
-     * @param        $host
-     * @param string $names
+     * @param string $user  РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+     * @param string $pass  РїР°СЂРѕР»СЊ
+     * @param string $db    РёРјСЏ Р±Р°Р·С‹
+     * @param string $host  С…РѕСЃС‚
+     * @param string $names set names
      */
-    public function __construct($user, $pass, $db, $host, $names = "cp1251")
+    public function __construct($user, $pass, $db, $host, $names = "utf8")
     {
+        $this->names          = $names;
+        $this->exclude_tables = array(
+            "s_visits_stat",
+            "s_visits_log",
+            "s_robots_stat",
+            "s_robots_log"
+        );
+
         if (is_null(self::$db)) {
             self::$db = new mysqli($host, $user, $pass, $db);
-            self::$db->query("set names '{$names}'");
+            self::$db->query("set names '{$this->names}'");
         }
-
-        $this->names = $names;
     }
 
     /**
-     * дамп базы
+     * РґР°РјРї Р±Р°Р·С‹
+     *
+     * @return void
      */
     public function export()
     {
         $this->init()
-        ->start()
-        ->exTables()
-        ->finish();
+            ->start()
+            ->exTables()
+            ->finish();
     }
 
     /**
+     * СЃС‚Р°СЂС‚ СЌРєСЃРїРѕСЂС‚Р°. РћС‚РґР°РµС‚ HTTP Р·Р°РіРѕР»РѕРІРєРё
+     *
      * @return $this
      */
     protected function start()
@@ -105,6 +115,8 @@ class DbDumper
     }
 
     /**
+     * РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїСЂРѕС†РµСЃСЃР° СЌРєСЃРїРѕСЂС‚Р°
+     *
      * @return $this
      * @throws Exception
      */
@@ -129,12 +141,13 @@ class DbDumper
             throw new Exception("Error trying to create gz tmp file");
         }
 
-
         return $this;
     }
 
     /**
-     * перебор всех таблиц (кроме исключенных)
+     * РїСЂРѕС…РѕРґ РїРѕ РІСЃРµРј С‚Р°Р±Р»РёС†Р°Рј Р±Р°Р·С‹ Рё СЌРєСЃРїРѕСЂС‚
+     * - С‚Р°Р±Р»РёС†С‹ РєРѕС‚РѕСЂС‹Рµ РЅРµ РЅСѓР¶РЅРѕ СЌРєСЃРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ
+     * РІ РјР°СЃСЃРёРІРµ $this->exclude_tables
      *
      * @return $this
      */
@@ -154,10 +167,12 @@ class DbDumper
             )
         );
 
+        // РІС‹Р±РѕСЂ РІСЃРµС… С‚Р°Р±Р»РёС† РІ Р±Р°Р·Рµ
         $res          = self::$db->query('SHOW TABLES');
         $this->tables = $res->fetch_all();
 
-        foreach ($this->tables as $key => $val) {
+        // РїСЂРѕС…РѕРґ РїРѕ РЅР°Р№РґРµРЅРЅС‹Рј С‚Р°Р±Р»РёС†Р°Рј
+        foreach ($this->tables as $val) {
             if (in_array($val[0], $this->exclude_tables) === false) {
                 $this->exportTable($val[0]);
             }
@@ -167,9 +182,11 @@ class DbDumper
     }
 
     /**
-     * пишет строку в gzip
+     * РїРёС€РµС‚ СЃС‚СЂРѕРєСѓ РІ СЌРєСЃРї. С„Р°Р№Р» (gz)
      *
-     * @param $str
+     * @param string $str СЃС‚СЂРѕРєР° SQL
+     *
+     * @return void
      */
     private function _writeRow($str)
     {
@@ -178,10 +195,12 @@ class DbDumper
     }
 
     /**
-     * экспорт одной таблицы: структура, данные
-     * закатано в транзакцию
+     * СЌРєСЃРїРѕСЂС‚ С‚Р°Р±Р»РёС†С‹: СЃС‚СЂСѓРєС‚СѓСЂР°, РґР°РЅРЅС‹Рµ.
+     * INSERT - РІ С‚СЂР°РЅР·Р°РєС†РёРё (РЅР° СЃР»СѓС‡Р°Р№ InnoDB)
      *
-     * @param $table
+     * @param string $table РёРјСЏ С‚Р°Р±Р»РёС†С‹ РґР»СЏ СЌРєСЃРїРѕСЂС‚Р°
+     *
+     * @return void
      */
     protected function exportTable($table)
     {
@@ -191,6 +210,7 @@ class DbDumper
                 $table
             )
         );
+
         $this->_writeRow(
             sprintf(
                 "DROP TABLE IF EXISTS `%s`",
@@ -204,10 +224,10 @@ class DbDumper
 
         $tbl_struct = $res->fetch_assoc();
 
-        // create table
+        // СЃС‚СЂСѓРєС‚СѓСЂР°
         $this->_writeRow($tbl_struct["Create Table"]);
 
-        // inserts
+        // РґР°РЅРЅС‹Рµ
         $this->_writeRow(
             sprintf(
                 "/*!40000 ALTER TABLE `%s` DISABLE KEYS */",
@@ -224,7 +244,6 @@ class DbDumper
                 $v[$k] = (empty($val))
                     ? '""'
                     : self::$db->real_escape_string($val);
-
             }
 
             $value .= '("' . implode('", "', $v) . '"),';
@@ -239,7 +258,6 @@ class DbDumper
 
                 $value = "";
             }
-
         }
 
         if (! empty($value)) {
@@ -267,7 +285,9 @@ class DbDumper
     }
 
     /**
-     * отдает gz клиенту
+     * РћРєРѕРЅС‡Р°РЅРёРµ РїСЂРѕС†РµСЃСЃР°. Р’С‹РґР°С‡Р° gz
+     *
+     * @return void
      */
     protected function finish()
     {
